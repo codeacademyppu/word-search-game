@@ -231,11 +231,31 @@
             >Separate words with a comma or new line — English letters
             only.</small
           >
+          <div class="suggestion-bank" id="suggestionBank" aria-label="Word suggestions">
+            <button type="button" data-topic="technical">Technical</button>
+            <button type="button" data-topic="education">Education</button>
+            <button type="button" data-topic="children">Children Learning</button>
+            <button type="button" data-topic="science">Science</button>
+            <button type="button" data-topic="math">Math</button>
+          </div>
           <div class="preview-words" id="previewWords">
             <span class="empty-note"
               >Enter words above and they will appear here</span
             >
           </div>
+        </div>
+
+        <div class="field">
+          <label for="inpDifficulty">Difficulty Level</label>
+          <select id="inpDifficulty">
+            <option value="easy" selected>Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <small
+            >Easy uses simpler word directions and a roomier grid. Hard keeps
+            every direction available.</small
+          >
         </div>
 
         <div class="field">

@@ -95,6 +95,7 @@
   let selecting = false;
   let startCell = null;
   let curPath = [];
+  let gameEnded = false;
   const lineColors = ["#1C84DD", "#F3B444", "#0D3B66", "#7CAE5C"];
   let colorIdx = 0;
 
@@ -117,6 +118,7 @@
     "createModalTitle",
     "inpName",
     "inpWords",
+    "inpDifficulty",
     "previewWords",
     "inpTarget",
     "targetVal",
@@ -135,9 +137,77 @@
     "progressBadge",
     "startCreated",
     "hintOverlay",
+    "suggestionBank",
   ].forEach((id) => {
     els[id] = document.getElementById(id);
   });
+
+  const WORD_SUGGESTIONS = {
+    technical: [
+      "HTML",
+      "CSS",
+      "PYTHON",
+      "VARIABLE",
+      "DEBUG",
+      "ALGORITHM",
+      "SYNTAX",
+      "BROWSER",
+      "SERVER",
+      "DATABASE",
+      "CODE",
+      "INPUT",
+      "OUTPUT",
+      "CONDITION",
+      "MOUSE",
+      "KEYBOARD",
+    ],
+    education: [
+      "TEACHER",
+      "STUDENT",
+      "LESSON",
+      "SCHOOL",
+      "BOOK",
+      "READING",
+      "WRITING",
+      "CLASSROOM",
+    ],
+    children: [
+      "APPLE",
+      "COLOR",
+      "NUMBER",
+      "SHAPE",
+      "LETTER",
+      "PUZZLE",
+      "FRIEND",
+      "STORY",
+    ],
+    science: [
+      "ATOM",
+      "ENERGY",
+      "PLANET",
+      "OXYGEN",
+      "GRAVITY",
+      "MAGNET",
+      "LAB",
+      "MOTION",
+    ],
+    math: [
+      "NUMBER",
+      "ADD",
+      "SUBTRACT",
+      "ANGLE",
+      "GRAPH",
+      "FRACTION",
+      "EQUAL",
+      "SHAPE",
+    ],
+  };
+
+  const DIFFICULTY_LABELS = {
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+  };
 
   function showView(id) {
     document
@@ -214,6 +284,7 @@
     els.startCreated.textContent = "Start Game";
     els.inpName.value = "";
     els.inpWords.value = "";
+    els.inpDifficulty.value = "easy";
     els.inpTarget.min = 1;
     els.inpTarget.max = 1;
     els.inpTarget.value = 1;
@@ -236,6 +307,7 @@
     els.startCreated.textContent = "Save & Play";
     els.inpName.value = game.name;
     els.inpWords.value = game.words.join(", ");
+    els.inpDifficulty.value = game.difficulty || "medium";
     renderPreviewWords();
     els.inpTarget.max = Math.max(1, pendingWords.length);
     els.inpTarget.value = Math.min(game.targetCount, pendingWords.length);
@@ -264,7 +336,7 @@
       .slice(0, 40);
   }
 
-  els.inpWords.addEventListener("input", () => {
+  function syncWordsFromInput() {
     pendingWords = parseWords(els.inpWords.value);
     renderPreviewWords();
     const maxW = Math.max(1, pendingWords.length);
@@ -275,6 +347,20 @@
     }
     els.targetVal.textContent = els.inpTarget.value;
     fillRange(els.inpTarget);
+  }
+
+  function setInputWords(words) {
+    els.inpWords.value = words.join(", ");
+    syncWordsFromInput();
+  }
+
+  els.inpWords.addEventListener("input", syncWordsFromInput);
+
+  els.suggestionBank.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-topic]");
+    if (!btn) return;
+    const suggestions = WORD_SUGGESTIONS[btn.dataset.topic] || [];
+    setInputWords([...pendingWords, ...suggestions]);
   });
 
   function renderPreviewWords() {
@@ -290,16 +376,7 @@
       chip.className = "chip";
       chip.innerHTML = `<span>${w}</span><button class="rm" type="button" title="Remove">✕</button>`;
       chip.querySelector(".rm").addEventListener("click", () => {
-        pendingWords = pendingWords.filter((x) => x !== w);
-        els.inpWords.value = pendingWords.join(", ");
-        renderPreviewWords();
-        const maxW = Math.max(1, pendingWords.length);
-        els.targetMax.textContent = pendingWords.length;
-        els.inpTarget.max = maxW;
-        if (parseInt(els.inpTarget.value) > pendingWords.length)
-          els.inpTarget.value = maxW;
-        els.targetVal.textContent = els.inpTarget.value;
-        fillRange(els.inpTarget);
+        setInputWords(pendingWords.filter((x) => x !== w));
       });
       els.previewWords.appendChild(chip);
     });
@@ -323,6 +400,7 @@
         "g_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
       name: els.inpName.value.trim() || "Untitled Game",
       words: pendingWords,
+      difficulty: els.inpDifficulty.value || "medium",
       targetCount: target,
       timeLimit: timeLimit,
       createdAt: Date.now(),
@@ -356,6 +434,8 @@
       row.className = "saved-item";
       const mins = Math.floor(g.timeLimit / 60),
         secs = g.timeLimit % 60;
+      const difficultyLabel =
+        DIFFICULTY_LABELS[g.difficulty] || DIFFICULTY_LABELS.medium;
       row.innerHTML = `
         <div class="info">
           <b>${escapeHtml(g.name)}</b>
@@ -374,6 +454,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="#0D3B66" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
           </button>
         </div>`;
+      row.querySelector(".info span").textContent += ` - ${difficultyLabel}`;
       row.querySelector(".edit").addEventListener("click", () => {
         closeModal(els.modalSaved);
         openEditModal(g);
@@ -405,37 +486,55 @@
     [1, -1],
     [-1, 1],
   ];
+  const DIFFICULTY_DIRS = {
+    easy: [
+      [0, 1],
+      [1, 0],
+    ],
+    medium: [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [1, -1],
+    ],
+    hard: DIRS,
+  };
   const MAX_GRID = 26;
 
-  function computeSize(words) {
+  function computeSize(words, difficulty) {
     const longest = Math.max(...words.map((w) => w.length));
     const totalLetters = words.reduce((a, w) => a + w.length, 0);
     const count = words.length;
-    const bySpace = Math.ceil(Math.sqrt(totalLetters / 0.5));
+    const density =
+      difficulty === "easy" ? 0.38 : difficulty === "hard" ? 0.58 : 0.48;
+    const padding = difficulty === "easy" ? 2 : difficulty === "hard" ? 0 : 1;
+    const bySpace = Math.ceil(Math.sqrt(totalLetters / density));
     const byCount = Math.ceil(count / 2) + 3;
-    let size = Math.max(bySpace, longest + 1, byCount);
+    let size = Math.max(bySpace, longest + 1 + padding, byCount + padding);
     return Math.min(Math.max(size, 8), MAX_GRID);
   }
 
-  function buildGrid(words) {
-    let size = computeSize(words);
+  function buildGrid(words, difficulty) {
+    const level = DIFFICULTY_DIRS[difficulty] ? difficulty : "medium";
+    let size = computeSize(words, level);
     let result = null;
     while (!result && size <= MAX_GRID) {
-      result = tryPlaceAll(words, size, false);
+      result = tryPlaceAll(words, size, false, level);
       if (!result) size++;
     }
-    if (!result) result = tryPlaceAll(words, MAX_GRID, true);
+    if (!result) result = tryPlaceAll(words, MAX_GRID, true, level);
     return result;
   }
 
-  function tryPlaceAll(words, size, force) {
+  function tryPlaceAll(words, size, force, difficulty) {
     const grid = Array.from({ length: size }, () => Array(size).fill(null));
     const placements = {};
+    const dirs = DIFFICULTY_DIRS[difficulty] || DIFFICULTY_DIRS.medium;
     const sorted = [...words].sort((a, b) => b.length - a.length);
     for (const word of sorted) {
       let placed = false;
       for (let tries = 0; tries < 600 && !placed; tries++) {
-        const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
+        const dir = dirs[Math.floor(Math.random() * dirs.length)];
         const r0 = Math.floor(Math.random() * size);
         const c0 = Math.floor(Math.random() * size);
         const rEnd = r0 + dir[0] * (word.length - 1);
@@ -473,8 +572,9 @@
   function launchGame(game) {
     current = game;
     foundSet = new Set();
+    gameEnded = false;
     colorIdx = 0;
-    gridData = buildGrid(game.words);
+    gridData = buildGrid(game.words, game.difficulty || "medium");
     cellSizePct = 100 / gridData.size;
 
     els.gameTitle.textContent = game.name;
@@ -526,7 +626,9 @@
   }
 
   function updateProgress() {
-    els.gameSub.textContent = `Drag to select a word — need ${current.targetCount} to win`;
+    const difficultyLabel =
+      DIFFICULTY_LABELS[current.difficulty] || DIFFICULTY_LABELS.medium;
+    els.gameSub.textContent = `${difficultyLabel} - drag to select a word - need ${current.targetCount} to win`;
     els.progressBadge.textContent = `${foundSet.size}/${current.targetCount}`;
   }
 
@@ -587,6 +689,7 @@
     return { r, c };
   }
   function onDown(e) {
+    if (gameEnded) return;
     const cell = cellFromPoint(e.clientX, e.clientY);
     if (!cell) return;
     selecting = true;
@@ -598,7 +701,7 @@
     paintPreview();
   }
   function onMove(e) {
-    if (!selecting) return;
+    if (!selecting || gameEnded) return;
     const cell = cellFromPoint(e.clientX, e.clientY);
     if (!cell) return;
     curPath = snapPath(startCell, cell);
@@ -607,6 +710,11 @@
   function onUp(e) {
     if (!selecting) return;
     selecting = false;
+    if (gameEnded) {
+      curPath = [];
+      paintPreview();
+      return;
+    }
     evaluateSelection();
   }
   function snapPath(start, end) {
@@ -773,6 +881,10 @@
   ];
 
   function triggerResult(won) {
+    gameEnded = true;
+    selecting = false;
+    curPath = [];
+    paintPreview();
     stopTimer();
     els.statFound.textContent = `${foundSet.size}/${current.targetCount}`;
     const used = current.timeLimit - Math.max(0, remaining);

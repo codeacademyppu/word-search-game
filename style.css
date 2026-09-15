@@ -638,21 +638,51 @@ body {
   margin-top: 5px;
 }
 .field input[type="text"],
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   font-family: var(--font-en);
   font-size: 14px;
   padding: 11px 13px;
   border: 1.5px solid var(--gray);
   border-radius: 8px;
-  resize: vertical;
   transition: border-color 0.18s ease;
   background: #fbfcfc;
 }
+.field textarea {
+  resize: vertical;
+}
+.field select {
+  cursor: pointer;
+}
 .field input[type="text"]:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: none;
   border-color: var(--blue);
+}
+
+.suggestion-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.suggestion-bank button {
+  font-family: var(--font-en);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  background: #fff;
+  border: 1.5px solid var(--gray);
+  border-radius: 16px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.suggestion-bank button:hover {
+  background: var(--beige);
+  border-color: var(--gold);
 }
 
 input[type="range"] {
