@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1"
+    />
+    <title>Code Academy | Word Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-pattern"></div>
+
+    <header class="topbar">
+      <button class="brand" id="logoHome" aria-label="Home">
+        <img
+          src="logo.png"
+          alt="Code Academy"
+          class="brand-logo"
+          onerror="this.style.display='none'"
+        />
+        <span class="wordmark"
+          >CODE ACADEMY<span class="tag"
+            >PPU — From Students To Students</span
+          ></span
+        >
+      </button>
+      <div class="topbar-actions">
+        <button
+          class="icon-toggle"
+          id="muteBtn"
+          title="Mute sound"
+          aria-label="Mute sound"
+        >
+          <svg
+            id="iconSoundOn"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0D3B66"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 9v6h4l5 5V4L8 9H4z" />
+            <path d="M17.5 8.5a5 5 0 0 1 0 7" />
+          </svg>
+          <svg
+            id="iconSoundOff"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0D3B66"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            hidden
+          >
+            <path d="M4 9v6h4l5 5V4L8 9H4z" />
+            <line x1="16" y1="9" x2="22" y2="15" />
+            <line x1="22" y1="9" x2="16" y2="15" />
+          </svg>
+        </button>
+        <button class="btn-outline" id="openSavedTop">Saved Games</button>
+      </div>
+    </header>
+
+    <main id="view-home" class="view active">
+      <div class="hero-eyebrow">WORD SEARCH GAME</div>
+      <h1>Scan the letters, find the <em>missing word</em></h1>
+      <p class="lead">
+        Build a custom word grid for your team or class, set how many words need
+        to be found to win, and set the timer — then let the game begin.
+      </p>
+      <div class="cta-row">
+        <button class="btn-solid primary" id="openCreate">
+          Create New Game
+        </button>
+        <button class="btn-solid secondary" id="openSavedHero">
+          Saved Games
+        </button>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 20 L20 4" />
+              <circle cx="6" cy="18" r="2" />
+              <circle cx="18" cy="6" r="2" />
+            </svg>
+          </div>
+          <h3>Drag to Select</h3>
+          <p>
+            Horizontal, vertical, or diagonal — in any direction. Just drag from
+            the first letter to the last.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#0D3B66"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="4.5" />
+              <circle cx="12" cy="12" r="0.8" fill="#0D3B66" />
+            </svg>
+          </div>
+          <h3>Flexible Win Goal</h3>
+          <p>
+            Choose how many words need to be found to win, and set a round
+            duration that fits you.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M6 3h12v18l-6-4-6 4V3z" />
+            </svg>
+          </div>
+          <h3>Save & Replay</h3>
+          <p>
+            Every game is saved in your browser, so you can come back to it,
+            edit it, or replay it anytime.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <main id="view-game" class="view">
+      <div class="game-head">
+        <div class="game-title" id="gameTitle">
+          —<small id="gameSub"></small>
+        </div>
+        <div class="timer" id="timerBox">
+          <div class="timer-ring" id="timerRing">
+            <svg width="46" height="46">
+              <circle class="bg" cx="23" cy="23" r="19"></circle>
+              <circle
+                class="fg"
+                id="ringFg"
+                cx="23"
+                cy="23"
+                r="19"
+                stroke-dasharray="119.4"
+                stroke-dashoffset="0"
+              ></circle>
+            </svg>
+          </div>
+          <div class="timer-num" id="timerNum">00:00</div>
+        </div>
+      </div>
+
+      <div class="grid-wrap" id="gridWrap">
+        <div class="grid-inner">
+          <div class="line-overlay" id="lineOverlay"></div>
+          <div class="grid" id="grid"></div>
+          <div class="line-overlay" id="hintOverlay"></div>
+        </div>
+      </div>
+
+      <div class="word-bank">
+        <div class="word-bank-head">
+          <h4>Words to Find</h4>
+          <span class="progress-badge" id="progressBadge">0/0</span>
+        </div>
+        <div class="word-list" id="wordList"></div>
+      </div>
+
+      <div class="game-controls">
+        <button class="link-btn" id="backHome">← Back to Home</button>
+        <button class="link-btn" id="revealWords">
+          Reveal all words (confirm they're in the grid)
+        </button>
+        <button class="link-btn" id="restartSame">Restart Same Game</button>
+      </div>
+    </main>
+
+    <div class="modal-backdrop" id="modalCreate" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h2 id="createModalTitle">Create New Game</h2>
+          <button class="modal-close" data-close>✕</button>
+        </div>
+        <p class="hint">
+          Enter the words, choose how many need to be found to win, and set the
+          round duration.
+        </p>
+
+        <div class="field">
+          <label for="inpName">Game Name</label>
+          <input
+            type="text"
+            id="inpName"
+            placeholder="e.g. Programming Terms"
+          />
+        </div>
+
+        <div class="field">
+          <label for="inpWords">Words</label>
+          <textarea
+            id="inpWords"
+            rows="3"
+            placeholder="HTML, CSS, PYTHON, ALGORITHM, DEBUG, FUNCTION"
+          ></textarea>
+          <small
+            >Separate words with a comma or new line — English letters
+            only.</small
+          >
+          <div class="preview-words" id="previewWords">
+            <span class="empty-note"
+              >Enter words above and they will appear here</span
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label>How many words need to be found to win?</label>
+          <input
+            type="range"
+            id="inpTarget"
+            min="1"
+            max="1"
+            value="1"
+            step="1"
+          />
+          <div class="slider-labels">
+            <span>Win goal</span
+            ><span
+              ><b id="targetVal">1</b> of <b id="targetMax">0</b> words</span
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Round Duration</label>
+          <input
+            type="range"
+            id="inpDuration"
+            min="20"
+            max="600"
+            value="180"
+            step="10"
+          />
+          <div class="slider-labels">
+            <span>Time limit</span><span><b id="durationVal">3:00</b></span>
+          </div>
+        </div>
+
+        <div class="err-msg" id="createErr"></div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="inpSave" checked />
+          <label for="inpSave">Save this game so I can play it later</label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-outline" data-close>Cancel</button>
+          <button class="btn-solid gold" id="startCreated">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="modalSaved" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h2>Saved Games</h2>
+          <button class="modal-close" data-close>✕</button>
+        </div>
+        <p class="hint">Games you've saved are stored only in this browser.</p>
+        <div id="savedList"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="modalResult" hidden>
+      <div class="modal result" role="dialog" aria-modal="true">
+        <div class="confetti-wrap" id="confettiWrap"></div>
+        <div class="result-icon" id="resultIcon"></div>
+        <h2 id="resultTitle">—</h2>
+        <p class="msg" id="resultMsg"></p>
+        <div class="stat-row">
+          <div><b id="statFound">0</b><span>Words Found</span></div>
+          <div><b id="statTime">0:00</b><span>Time Used</span></div>
+        </div>
+        <div class="modal-actions" style="justify-content: center">
+          <button class="btn-outline" id="resultHome">Home</button>
+          <button class="btn-solid gold" id="resultReplay">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
