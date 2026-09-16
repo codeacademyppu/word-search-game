@@ -225,18 +225,16 @@
           <textarea
             id="inpWords"
             rows="3"
-            placeholder="HTML, CSS, PYTHON, ALGORITHM, DEBUG, FUNCTION"
+            placeholder="MOUSE, SCREEN, LAPTOP, PHONE, EMAIL, WIFI"
           ></textarea>
           <small
-            >Separate words with a comma or new line — English letters
-            only.</small
+            >Use the defaults or add your own words, separated by commas or new
+            lines.</small
           >
           <div class="suggestion-bank" id="suggestionBank" aria-label="Word suggestions">
-            <button type="button" data-topic="technical">Technical</button>
-            <button type="button" data-topic="education">Education</button>
-            <button type="button" data-topic="children">Children Learning</button>
-            <button type="button" data-topic="science">Science</button>
-            <button type="button" data-topic="math">Math</button>
+            <button type="button" data-difficulty="easy">Easy Words</button>
+            <button type="button" data-difficulty="medium">Medium Words</button>
+            <button type="button" data-difficulty="hard">Hard Words</button>
           </div>
           <div class="preview-words" id="previewWords">
             <span class="empty-note"
@@ -253,8 +251,8 @@
             <option value="hard">Hard</option>
           </select>
           <small
-            >Easy uses simpler word directions and a roomier grid. Hard keeps
-            every direction available.</small
+            >Each level has matching default words, directions, and grid
+            size.</small
           >
         </div>
 

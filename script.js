@@ -85,6 +85,8 @@
   });
 
   let pendingWords = [];
+  let targetTouched = false;
+  let usingDifficultyDefaults = false;
   let editingId = null;
   let current = null;
   let gridData = null;
@@ -142,64 +144,52 @@
     els[id] = document.getElementById(id);
   });
 
-  const WORD_SUGGESTIONS = {
-    technical: [
+  const DIFFICULTY_WORDS = {
+    easy: [
+      "MOUSE",
+      "SCREEN",
+      "LAPTOP",
+      "PHONE",
+      "EMAIL",
+      "WIFI",
+      "USB",
+      "FILE",
+      "FOLDER",
+      "PRINT",
+    ],
+    medium: [
       "HTML",
       "CSS",
       "PYTHON",
-      "VARIABLE",
-      "DEBUG",
-      "ALGORITHM",
-      "SYNTAX",
       "BROWSER",
       "SERVER",
       "DATABASE",
-      "CODE",
+      "FUNCTION",
+      "VARIABLE",
+      "DEBUG",
       "INPUT",
       "OUTPUT",
-      "CONDITION",
-      "MOUSE",
-      "KEYBOARD",
+      "LOGIN",
+      "CODE",
+      "SYNTAX",
     ],
-    education: [
-      "TEACHER",
-      "STUDENT",
-      "LESSON",
-      "SCHOOL",
-      "BOOK",
-      "READING",
-      "WRITING",
-      "CLASSROOM",
-    ],
-    children: [
-      "APPLE",
-      "COLOR",
-      "NUMBER",
-      "SHAPE",
-      "LETTER",
-      "PUZZLE",
-      "FRIEND",
-      "STORY",
-    ],
-    science: [
-      "ATOM",
-      "ENERGY",
-      "PLANET",
-      "OXYGEN",
-      "GRAVITY",
-      "MAGNET",
-      "LAB",
-      "MOTION",
-    ],
-    math: [
-      "NUMBER",
-      "ADD",
-      "SUBTRACT",
-      "ANGLE",
-      "GRAPH",
-      "FRACTION",
-      "EQUAL",
-      "SHAPE",
+    hard: [
+      "ALGORITHM",
+      "JAVASCRIPT",
+      "TERMINAL",
+      "FRAMEWORK",
+      "REPOSITORY",
+      "ENCRYPTION",
+      "FIREWALL",
+      "COMPILER",
+      "PROTOCOL",
+      "RECURSION",
+      "NETWORK",
+      "CACHE",
+      "ASYNC",
+      "INTERFACE",
+      "CONSTRUCTOR",
+      "AUTHENTICATION",
     ],
   };
 
@@ -269,6 +259,7 @@
   }
 
   els.inpTarget.addEventListener("input", () => {
+    targetTouched = true;
     els.targetVal.textContent = els.inpTarget.value;
     fillRange(els.inpTarget);
   });
@@ -279,11 +270,12 @@
 
   function resetCreateModal() {
     editingId = null;
+    targetTouched = false;
+    usingDifficultyDefaults = true;
     pendingWords = [];
     els.createModalTitle.textContent = "Create New Game";
     els.startCreated.textContent = "Start Game";
     els.inpName.value = "";
-    els.inpWords.value = "";
     els.inpDifficulty.value = "easy";
     els.inpTarget.min = 1;
     els.inpTarget.max = 1;
@@ -291,10 +283,8 @@
     els.inpDuration.value = 180;
     els.inpSave.checked = true;
     els.createErr.style.display = "none";
-    renderPreviewWords();
-    els.targetVal.textContent = "1";
+    setDifficultyWords("easy");
     els.durationVal.textContent = fmtMMSS(180);
-    fillRange(els.inpTarget);
     fillRange(els.inpDuration);
     openModal(els.modalCreate);
     setTimeout(() => els.inpName.focus(), 60);
@@ -302,6 +292,8 @@
 
   function openEditModal(game) {
     editingId = game.id;
+    targetTouched = true;
+    usingDifficultyDefaults = false;
     pendingWords = [...game.words];
     els.createModalTitle.textContent = "Edit Game";
     els.startCreated.textContent = "Save & Play";
@@ -342,25 +334,48 @@
     const maxW = Math.max(1, pendingWords.length);
     els.targetMax.textContent = pendingWords.length;
     els.inpTarget.max = maxW;
-    if (parseInt(els.inpTarget.value) > pendingWords.length) {
+    if (!targetTouched) {
+      els.inpTarget.value = defaultTargetForCount(pendingWords.length);
+    } else if (parseInt(els.inpTarget.value) > pendingWords.length) {
       els.inpTarget.value = maxW;
     }
     els.targetVal.textContent = els.inpTarget.value;
     fillRange(els.inpTarget);
   }
 
-  function setInputWords(words) {
+  function defaultTargetForCount(count) {
+    if (count <= 0) return 1;
+    return Math.min(count, Math.max(2, Math.ceil(count * 0.55)));
+  }
+
+  function setInputWords(words, fromDifficultyDefaults) {
+    usingDifficultyDefaults = !!fromDifficultyDefaults;
     els.inpWords.value = words.join(", ");
     syncWordsFromInput();
   }
 
-  els.inpWords.addEventListener("input", syncWordsFromInput);
+  function setDifficultyWords(difficulty) {
+    targetTouched = false;
+    setInputWords(DIFFICULTY_WORDS[difficulty] || DIFFICULTY_WORDS.medium, true);
+  }
+
+  els.inpWords.addEventListener("input", () => {
+    usingDifficultyDefaults = false;
+    syncWordsFromInput();
+  });
+
+  els.inpDifficulty.addEventListener("change", () => {
+    if (editingId) return;
+    if (usingDifficultyDefaults || !parseWords(els.inpWords.value).length) {
+      setDifficultyWords(els.inpDifficulty.value);
+    }
+  });
 
   els.suggestionBank.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-topic]");
+    const btn = e.target.closest("button[data-difficulty]");
     if (!btn) return;
-    const suggestions = WORD_SUGGESTIONS[btn.dataset.topic] || [];
-    setInputWords([...pendingWords, ...suggestions]);
+    els.inpDifficulty.value = btn.dataset.difficulty;
+    setDifficultyWords(btn.dataset.difficulty);
   });
 
   function renderPreviewWords() {
@@ -499,30 +514,49 @@
     ],
     hard: DIRS,
   };
-  const MAX_GRID = 26;
+  const GRID_LIMITS = {
+    easy: { min: 10, max: 18 },
+    medium: { min: 12, max: 22 },
+    hard: { min: 14, max: 26 },
+  };
+  const WORD_LIMITS = {
+    easy: 10,
+    medium: 14,
+    hard: 40,
+  };
 
   function computeSize(words, difficulty) {
     const longest = Math.max(...words.map((w) => w.length));
     const totalLetters = words.reduce((a, w) => a + w.length, 0);
     const count = words.length;
+    const limits = GRID_LIMITS[difficulty] || GRID_LIMITS.medium;
     const density =
-      difficulty === "easy" ? 0.38 : difficulty === "hard" ? 0.58 : 0.48;
+      difficulty === "easy" ? 0.44 : difficulty === "hard" ? 0.58 : 0.5;
     const padding = difficulty === "easy" ? 2 : difficulty === "hard" ? 0 : 1;
     const bySpace = Math.ceil(Math.sqrt(totalLetters / density));
     const byCount = Math.ceil(count / 2) + 3;
     let size = Math.max(bySpace, longest + 1 + padding, byCount + padding);
-    return Math.min(Math.max(size, 8), MAX_GRID);
+    return Math.min(Math.max(size, limits.min), limits.max);
+  }
+
+  function wordsForRound(words, difficulty) {
+    const limit = WORD_LIMITS[difficulty] || WORD_LIMITS.medium;
+    if (words.length <= limit) return [...words];
+    return [...words]
+      .sort((a, b) => a.length - b.length || a.localeCompare(b))
+      .slice(0, limit);
   }
 
   function buildGrid(words, difficulty) {
     const level = DIFFICULTY_DIRS[difficulty] ? difficulty : "medium";
+    const limits = GRID_LIMITS[level] || GRID_LIMITS.medium;
     let size = computeSize(words, level);
     let result = null;
-    while (!result && size <= MAX_GRID) {
+    while (!result && size <= limits.max) {
       result = tryPlaceAll(words, size, false, level);
       if (!result) size++;
     }
-    if (!result) result = tryPlaceAll(words, MAX_GRID, true, level);
+    if (!result) result = tryPlaceAll(words, limits.max, true, level);
     return result;
   }
 
@@ -570,18 +604,28 @@
   }
 
   function launchGame(game) {
-    current = game;
+    const difficulty = game.difficulty || "medium";
+    const roundWords = wordsForRound(game.words, difficulty);
+    const requestedTarget =
+      parseInt(game.targetCount) || defaultTargetForCount(roundWords.length);
+    current = {
+      ...game,
+      difficulty,
+      words: roundWords,
+      originalWordCount: game.words.length,
+      targetCount: Math.min(requestedTarget, roundWords.length),
+    };
     foundSet = new Set();
     gameEnded = false;
     colorIdx = 0;
-    gridData = buildGrid(game.words, game.difficulty || "medium");
+    gridData = buildGrid(current.words, difficulty);
     cellSizePct = 100 / gridData.size;
 
-    els.gameTitle.textContent = game.name;
+    els.gameTitle.textContent = current.name;
     updateProgress();
     renderGrid();
     renderWordList();
-    startTimer(game.timeLimit);
+    startTimer(current.timeLimit);
     showView("view-game");
     revealed = false;
     const revealBtn = document.getElementById("revealWords");
@@ -628,7 +672,11 @@
   function updateProgress() {
     const difficultyLabel =
       DIFFICULTY_LABELS[current.difficulty] || DIFFICULTY_LABELS.medium;
-    els.gameSub.textContent = `${difficultyLabel} - drag to select a word - need ${current.targetCount} to win`;
+    const roundNote =
+      current.originalWordCount > current.words.length
+        ? ` - ${current.words.length} of ${current.originalWordCount} words in this round`
+        : "";
+    els.gameSub.textContent = `${difficultyLabel}${roundNote} - drag to select a word - need ${current.targetCount} to win`;
     els.progressBadge.textContent = `${foundSet.size}/${current.targetCount}`;
   }
 
