@@ -356,7 +356,10 @@
 
   function setDifficultyWords(difficulty) {
     targetTouched = false;
-    setInputWords(DIFFICULTY_WORDS[difficulty] || DIFFICULTY_WORDS.medium, true);
+    setInputWords(
+      DIFFICULTY_WORDS[difficulty] || DIFFICULTY_WORDS.medium,
+      true
+    );
   }
 
   els.inpWords.addEventListener("input", () => {
